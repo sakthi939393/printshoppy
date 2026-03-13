@@ -57,3 +57,4 @@ infrastructure/nginx/ssl/
 
 # Docker volumes (local)
 .docker/
+.vercel
