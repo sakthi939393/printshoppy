@@ -186,7 +186,7 @@ export default function CanvasEditor({ zoom, view, onLayersChange }: CanvasEdito
     };
 
     (window as any).getCanvasJson = () => fabricRef.current?.toJSON();
-    (window as any).getCanvasDataUrl = () => fabricRef.current?.toDataURL({ format: 'png', quality: 1 });
+    (window as any).getCanvasDataUrl = () => fabricRef.current?.toDataURL({ multiplier: 1, format: 'png', quality: 1 });
   }, []);
 
   return (
