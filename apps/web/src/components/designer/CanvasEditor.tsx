@@ -119,11 +119,11 @@ export default function CanvasEditor({ zoom, view, onLayersChange }: CanvasEdito
   function updateLayers() {
     if (!fabricRef.current) return;
     const objects = fabricRef.current.getObjects()
-      .filter(obj => obj.name !== 'print-mask' && obj.name !== 'print-label')
+      .filter(obj => (obj as any).name !== 'print-mask' && (obj as any).name !== 'print-label')
       .map((obj, index) => ({
-        id: obj.name || `layer-${index}`,
+        id: (obj as any).name || `layer-${index}`,
         type: obj.type === 'i-text' || obj.type === 'text' ? 'text' : obj.type === 'image' ? 'image' : 'shape',
-        name: obj.name || `Layer ${index + 1}`,
+        name: (obj as any).name || `Layer ${index + 1}`,
         visible: obj.visible ?? true,
         locked: !obj.selectable,
       }));
