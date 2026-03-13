@@ -79,7 +79,7 @@
   }
 
   .product-card {
-    @apply card hover:shadow-md transition-all duration-300 group cursor-pointer;
+    @apply card hover:shadow-md transition-all duration-300 cursor-pointer;
   }
 
   .gradient-primary {
