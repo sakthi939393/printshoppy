@@ -3,20 +3,20 @@ import type { NextConfig } from 'next';
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   images: {
-    domains: [
-      'localhost',
-      'your-r2-public-url.com',
-      'images.unsplash.com',
-      'via.placeholder.com',
+    remotePatterns: [
+      { protocol: 'http', hostname: 'localhost' },
+      { protocol: 'https', hostname: '*.r2.cloudflarestorage.com' },
+      { protocol: 'https', hostname: 'images.unsplash.com' },
+      { protocol: 'https', hostname: 'via.placeholder.com' },
+      {
+        protocol: 'https',
+        hostname: process.env.NEXT_PUBLIC_R2_PUBLIC_DOMAIN || 'pub.your-r2-domain.com',
+      },
     ],
     formats: ['image/avif', 'image/webp'],
   },
   experimental: {
-    optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
-  },
-  env: {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000',
-    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+    optimizePackageImports: ['lucide-react'],
   },
 };
 
