@@ -1,0 +1,592 @@
+// Prisma Schema for PrintShoppy Platform
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== ENUMS ====================
+
+enum Role {
+  CUSTOMER
+  ADMIN
+  SUPER_ADMIN
+  PRODUCTION_STAFF
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PAYMENT_PENDING
+  PAYMENT_FAILED
+  PROCESSING
+  DESIGN_REVIEW
+  PRINT_QUEUE
+  PRINTING
+  QUALITY_CHECK
+  DISPATCHED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+enum PaymentGateway {
+  RAZORPAY
+  STRIPE
+  WALLET
+  COD
+}
+
+enum ProductStatus {
+  ACTIVE
+  INACTIVE
+  DRAFT
+  ARCHIVED
+}
+
+enum DesignStatus {
+  DRAFT
+  SAVED
+  SUBMITTED
+  APPROVED
+  REJECTED
+}
+
+enum PrintJobStatus {
+  QUEUED
+  ASSIGNED
+  PRINTING
+  QUALITY_CHECK
+  COMPLETED
+  FAILED
+}
+
+enum CouponType {
+  PERCENTAGE
+  FIXED
+  FREE_SHIPPING
+}
+
+enum ShippingStatus {
+  PENDING
+  PICKUP_SCHEDULED
+  PICKED_UP
+  IN_TRANSIT
+  OUT_FOR_DELIVERY
+  DELIVERED
+  FAILED
+  RETURNED
+}
+
+// ==================== USER & AUTH ====================
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  phone         String?   @unique
+  name          String
+  avatar        String?
+  role          Role      @default(CUSTOMER)
+  isVerified    Boolean   @default(false)
+  isActive      Boolean   @default(true)
+  passwordHash  String?
+  googleId      String?   @unique
+  walletBalance Decimal   @default(0) @db.Decimal(10, 2)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  addresses     Address[]
+  orders        Order[]
+  designs       Design[]
+  cart          Cart?
+  wishlist      Wishlist[]
+  reviews       Review[]
+  sessions      UserSession[]
+  notifications Notification[]
+  walletTx      WalletTransaction[]
+
+  @@map("users")
+}
+
+model UserSession {
+  id           String   @id @default(uuid())
+  userId       String
+  refreshToken String   @unique
+  deviceInfo   String?
+  ipAddress    String?
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_sessions")
+}
+
+model Address {
+  id         String   @id @default(uuid())
+  userId     String
+  label      String   @default("Home")
+  name       String
+  phone      String
+  line1      String
+  line2      String?
+  city       String
+  state      String
+  pincode    String
+  country    String   @default("IN")
+  isDefault  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orders Order[]
+
+  @@map("addresses")
+}
+
+// ==================== PRODUCTS ====================
+
+model Category {
+  id          String     @id @default(uuid())
+  name        String
+  slug        String     @unique
+  description String?
+  image       String?
+  parentId    String?
+  sortOrder   Int        @default(0)
+  isActive    Boolean    @default(true)
+  metaTitle   String?
+  metaDesc    String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  parent   Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children Category[] @relation("CategoryHierarchy")
+  products Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  id              String        @id @default(uuid())
+  categoryId      String
+  name            String
+  slug            String        @unique
+  description     String?
+  basePrice       Decimal       @db.Decimal(10, 2)
+  status          ProductStatus @default(DRAFT)
+  isCustomizable  Boolean       @default(true)
+  isPrintReady    Boolean       @default(false)
+  minQuantity     Int           @default(1)
+  maxQuantity     Int?
+  productionDays  Int           @default(3)
+  weight          Decimal?      @db.Decimal(8, 3)
+  metaTitle       String?
+  metaDesc        String?
+  tags            String[]
+  sortOrder       Int           @default(0)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  category       Category        @relation(fields: [categoryId], references: [id])
+  variants       ProductVariant[]
+  images         ProductImage[]
+  printAreas     PrintArea[]
+  templates      Template[]
+  cartItems      CartItem[]
+  orderItems     OrderItem[]
+  wishlist       Wishlist[]
+  reviews        Review[]
+
+  @@map("products")
+}
+
+model ProductVariant {
+  id          String  @id @default(uuid())
+  productId   String
+  name        String
+  sku         String  @unique
+  price       Decimal @db.Decimal(10, 2)
+  stock       Int     @default(0)
+  size        String?
+  color       String?
+  colorHex    String?
+  material    String?
+  weight      Decimal? @db.Decimal(8, 3)
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  product    Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  cartItems  CartItem[]
+  orderItems OrderItem[]
+
+  @@map("product_variants")
+}
+
+model ProductImage {
+  id        String   @id @default(uuid())
+  productId String
+  url       String
+  altText   String?
+  isPrimary Boolean  @default(false)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("product_images")
+}
+
+model PrintArea {
+  id          String  @id @default(uuid())
+  productId   String
+  name        String
+  x           Float
+  y           Float
+  width       Float
+  height      Float
+  unit        String  @default("px")
+  maskUrl     String?
+  maxFileSize Int?
+  allowedDpi  Int     @default(150)
+  isRequired  Boolean @default(true)
+
+  product   Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
+  templates Template[]
+
+  @@map("print_areas")
+}
+
+// ==================== DESIGNS & TEMPLATES ====================
+
+model Template {
+  id           String       @id @default(uuid())
+  productId    String?
+  printAreaId  String?
+  name         String
+  description  String?
+  thumbnail    String?
+  canvasJson   Json
+  isPublic     Boolean      @default(true)
+  isPremium    Boolean      @default(false)
+  price        Decimal?     @db.Decimal(10, 2)
+  category     String?
+  tags         String[]
+  usageCount   Int          @default(0)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  product   Product?   @relation(fields: [productId], references: [id])
+  printArea PrintArea? @relation(fields: [printAreaId], references: [id])
+  designs   Design[]
+
+  @@map("templates")
+}
+
+model Design {
+  id          String       @id @default(uuid())
+  userId      String
+  templateId  String?
+  productId   String?
+  name        String
+  canvasJson  Json
+  thumbnail   String?
+  previewUrl  String?
+  status      DesignStatus @default(DRAFT)
+  printAreaId String?
+  width       Float?
+  height      Float?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  template   Template?   @relation(fields: [templateId], references: [id])
+  orderItems OrderItem[]
+
+  @@map("designs")
+}
+
+// ==================== CART & ORDERS ====================
+
+model Cart {
+  id        String     @id @default(uuid())
+  userId    String     @unique
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items CartItem[]
+
+  @@map("carts")
+}
+
+model CartItem {
+  id        String   @id @default(uuid())
+  cartId    String
+  productId String
+  variantId String?
+  designId  String?
+  quantity  Int
+  customization Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  cart    Cart            @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product Product         @relation(fields: [productId], references: [id])
+  variant ProductVariant? @relation(fields: [variantId], references: [id])
+
+  @@map("cart_items")
+}
+
+model Order {
+  id              String      @id @default(uuid())
+  orderNumber     String      @unique
+  userId          String
+  addressId       String?
+  status          OrderStatus @default(PENDING)
+  subtotal        Decimal     @db.Decimal(10, 2)
+  discountAmount  Decimal     @default(0) @db.Decimal(10, 2)
+  shippingAmount  Decimal     @default(0) @db.Decimal(10, 2)
+  taxAmount       Decimal     @default(0) @db.Decimal(10, 2)
+  totalAmount     Decimal     @db.Decimal(10, 2)
+  couponCode      String?
+  couponId        String?
+  notes           String?
+  estimatedDelivery DateTime?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  user     User       @relation(fields: [userId], references: [id])
+  address  Address?   @relation(fields: [addressId], references: [id])
+  coupon   Coupon?    @relation(fields: [couponId], references: [id])
+  items    OrderItem[]
+  payment  Payment?
+  shipping Shipment?
+  printJob PrintJob?
+  timeline OrderTimeline[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id            String   @id @default(uuid())
+  orderId       String
+  productId     String
+  variantId     String?
+  designId      String?
+  quantity      Int
+  unitPrice     Decimal  @db.Decimal(10, 2)
+  totalPrice    Decimal  @db.Decimal(10, 2)
+  customization Json?
+  printFileUrl  String?
+  createdAt     DateTime @default(now())
+
+  order   Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product         @relation(fields: [productId], references: [id])
+  variant ProductVariant? @relation(fields: [variantId], references: [id])
+  design  Design?         @relation(fields: [designId], references: [id])
+
+  @@map("order_items")
+}
+
+model OrderTimeline {
+  id        String      @id @default(uuid())
+  orderId   String
+  status    OrderStatus
+  note      String?
+  createdBy String?
+  createdAt DateTime    @default(now())
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("order_timelines")
+}
+
+// ==================== PAYMENTS ====================
+
+model Payment {
+  id              String         @id @default(uuid())
+  orderId         String         @unique
+  gateway         PaymentGateway
+  gatewayOrderId  String?
+  gatewayPaymentId String?
+  amount          Decimal        @db.Decimal(10, 2)
+  currency        String         @default("INR")
+  status          PaymentStatus  @default(PENDING)
+  failureReason   String?
+  refundAmount    Decimal?       @db.Decimal(10, 2)
+  refundId        String?
+  metadata        Json?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  order Order @relation(fields: [orderId], references: [id])
+
+  @@map("payments")
+}
+
+model WalletTransaction {
+  id          String   @id @default(uuid())
+  userId      String
+  amount      Decimal  @db.Decimal(10, 2)
+  type        String   // CREDIT | DEBIT
+  description String
+  reference   String?
+  balance     Decimal  @db.Decimal(10, 2)
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("wallet_transactions")
+}
+
+// ==================== COUPONS ====================
+
+model Coupon {
+  id              String     @id @default(uuid())
+  code            String     @unique
+  type            CouponType
+  value           Decimal    @db.Decimal(10, 2)
+  minOrderAmount  Decimal?   @db.Decimal(10, 2)
+  maxDiscount     Decimal?   @db.Decimal(10, 2)
+  usageLimit      Int?
+  usageCount      Int        @default(0)
+  perUserLimit    Int        @default(1)
+  isActive        Boolean    @default(true)
+  validFrom       DateTime
+  validUntil      DateTime?
+  applicableFor   String[]
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  orders Order[]
+
+  @@map("coupons")
+}
+
+// ==================== SHIPPING ====================
+
+model Shipment {
+  id              String         @id @default(uuid())
+  orderId         String         @unique
+  shiprocketId    String?
+  awbCode         String?
+  courier         String?
+  status          ShippingStatus @default(PENDING)
+  trackingUrl     String?
+  pickupScheduled DateTime?
+  deliveredAt     DateTime?
+  weight          Decimal?       @db.Decimal(8, 3)
+  dimensions      Json?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  order Order @relation(fields: [orderId], references: [id])
+
+  @@map("shipments")
+}
+
+// ==================== PRODUCTION ====================
+
+model PrintJob {
+  id          String         @id @default(uuid())
+  orderId     String         @unique
+  status      PrintJobStatus @default(QUEUED)
+  assignedTo  String?
+  priority    Int            @default(5)
+  notes       String?
+  printFiles  Json?
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  order Order @relation(fields: [orderId], references: [id])
+
+  @@map("print_jobs")
+}
+
+// ==================== REVIEWS ====================
+
+model Review {
+  id        String   @id @default(uuid())
+  userId    String
+  productId String
+  orderId   String?
+  rating    Int
+  title     String?
+  body      String?
+  images    String[]
+  isVerified Boolean @default(false)
+  isVisible  Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  @@map("reviews")
+}
+
+// ==================== WISHLIST ====================
+
+model Wishlist {
+  id        String   @id @default(uuid())
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@unique([userId, productId])
+  @@map("wishlists")
+}
+
+// ==================== NOTIFICATIONS ====================
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  title     String
+  message   String
+  type      String
+  isRead    Boolean  @default(false)
+  data      Json?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+// ==================== ANALYTICS ====================
+
+model AnalyticsEvent {
+  id         String   @id @default(uuid())
+  event      String
+  userId     String?
+  sessionId  String?
+  properties Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  @@index([event, createdAt])
+  @@map("analytics_events")
+}
