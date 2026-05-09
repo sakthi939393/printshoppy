@@ -47,8 +47,8 @@ export function Header() {
       )}
     >
       {/* Top Bar */}
-      <div className="bg-primary-700 text-white text-xs py-1.5 text-center">
-        🚀 Free shipping on orders above ₹999 | Use code FIRST10 for 10% off your first order!
+      <div className="bg-primary-600 text-white text-xs py-1.5 text-center font-medium tracking-wide">
+        🎁 Free shipping on orders above ₹999 &nbsp;|&nbsp; Use code <span className="font-bold">FIRST10</span> for 10% off your first order!
       </div>
 
       <div className="container-custom">
@@ -56,10 +56,10 @@ export function Header() {
           {/* Logo */}
           <Link href="/" className="flex-shrink-0">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-primary-600 to-blue-700 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-sm">P</span>
               </div>
-              <span className="text-xl font-bold text-gradient hidden sm:block">PrintShoppy</span>
+              <span className="text-xl font-bold text-primary-700 hidden sm:block">PrintShoppy</span>
             </div>
           </Link>
 

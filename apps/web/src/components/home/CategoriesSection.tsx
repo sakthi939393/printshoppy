@@ -6,18 +6,42 @@ import { ArrowRight } from 'lucide-react';
 
 const categories = [
   {
-    name: 'T-Shirts & Apparel',
+    name: 'Wall Decoratives',
+    slug: 'wall-decor',
+    emoji: '🖼️',
+    count: '60+ options',
+    gradient: 'from-amber-500 to-orange-500',
+    bg: 'bg-amber-50',
+  },
+  {
+    name: 'Home Decor',
+    slug: 'home-decor',
+    emoji: '🏡',
+    count: '80+ styles',
+    gradient: 'from-teal-500 to-cyan-500',
+    bg: 'bg-teal-50',
+  },
+  {
+    name: 'Fashion & Apparel',
     slug: 'apparel',
     emoji: '👕',
     count: '150+ designs',
-    gradient: 'from-blue-500 to-indigo-600',
-    bg: 'bg-blue-50',
+    gradient: 'from-rose-500 to-pink-500',
+    bg: 'bg-rose-50',
+  },
+  {
+    name: 'Photo Books',
+    slug: 'photo-books',
+    emoji: '📖',
+    count: '30+ layouts',
+    gradient: 'from-violet-500 to-purple-600',
+    bg: 'bg-violet-50',
   },
   {
     name: 'Mugs & Drinkware',
     slug: 'mugs',
     emoji: '☕',
-    count: '80+ styles',
+    count: '50+ styles',
     gradient: 'from-orange-500 to-red-500',
     bg: 'bg-orange-50',
   },
@@ -26,48 +50,24 @@ const categories = [
     slug: 'business-cards',
     emoji: '💼',
     count: '200+ templates',
-    gradient: 'from-gray-700 to-gray-900',
+    gradient: 'from-gray-600 to-gray-800',
     bg: 'bg-gray-50',
   },
   {
-    name: 'Banners & Signage',
-    slug: 'banners',
-    emoji: '🎌',
-    count: '50+ sizes',
-    gradient: 'from-green-500 to-teal-600',
-    bg: 'bg-green-50',
+    name: 'Calendars',
+    slug: 'calendars',
+    emoji: '📅',
+    count: '20+ formats',
+    gradient: 'from-sky-500 to-blue-600',
+    bg: 'bg-sky-50',
   },
   {
     name: 'Stickers & Labels',
     slug: 'stickers',
     emoji: '✨',
     count: '100+ options',
-    gradient: 'from-pink-500 to-rose-600',
-    bg: 'bg-pink-50',
-  },
-  {
-    name: 'Notebooks & Diaries',
-    slug: 'notebooks',
-    emoji: '📓',
-    count: '40+ styles',
-    gradient: 'from-purple-500 to-violet-600',
-    bg: 'bg-purple-50',
-  },
-  {
-    name: 'Photo Products',
-    slug: 'photo',
-    emoji: '🖼️',
-    count: '60+ options',
-    gradient: 'from-cyan-500 to-blue-600',
-    bg: 'bg-cyan-50',
-  },
-  {
-    name: 'Packaging',
-    slug: 'packaging',
-    emoji: '📦',
-    count: '30+ types',
-    gradient: 'from-amber-500 to-yellow-600',
-    bg: 'bg-amber-50',
+    gradient: 'from-green-500 to-teal-600',
+    bg: 'bg-green-50',
   },
 ];
 
@@ -89,9 +89,9 @@ export function CategoriesSection() {
     <section className="py-20 bg-white">
       <div className="container-custom">
         <div className="text-center mb-12">
-          <h2 className="section-title">What Would You Like to Print?</h2>
+          <h2 className="section-title">Shop By Category</h2>
           <p className="section-subtitle max-w-2xl mx-auto">
-            From business essentials to personal gifts, we print it all with premium quality.
+            From personalized gifts to business essentials — premium quality printing on 500+ products.
           </p>
         </div>
 
